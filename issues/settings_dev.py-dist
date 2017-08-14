@@ -1,0 +1,14 @@
+from .settings import *  # noqa
+
+
+INSTALLED_APPS += [  # noqa
+    'debug_toolbar',
+    'django_extensions',
+]
+
+
+MIDDLEWARE += [  # noqa
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
+]
+
+INTERNAL_IPS = ['127.0.0.1']
