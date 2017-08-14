@@ -19,7 +19,7 @@ class ChartView(generic.TemplateView):
         context = super(ChartView, self).get_context_data(*args, **kwargs)
         pipelines = Pipeline.objects.filter(
             repo__name=repo_name
-        ).values_list('name', flat=True)
+        ).values_list('name', flat=True).order_by('order')
         context['pipelines'] = {i: i in durations for i in pipelines}
         context['repos'] = {i: i == repo_name for i in repos}
         return context
@@ -31,6 +31,13 @@ class ChartResponseView(generic.View):
         issues = Issue.objects.select_related('repo').filter(
             repo__name=repo_name,
         ).exclude(durations={})
+        try:
+            cycle_time_starter = Pipeline.objects.get(
+                repo__name=repo_name, is_cycle_time_starter=True).order
+            cycle_time_pipelines = Pipeline.objects.filter(
+                order__gte=cycle_time_starter).values_list('name', flat=True)
+        except Pipeline.DoesNotExist:
+            cycle_time_pipelines = None
         if since and until:
             since, until = int(float(since)), int(float(until))
             issues = issues.filter(
@@ -45,7 +52,8 @@ class ChartResponseView(generic.View):
         rolling_set = []
         deviation_set = []
         for order, issue in enumerate(issues):
-            rolling, deviation = self.calculate_rolling_average(issues, order)
+            rolling, deviation = self.calculate_rolling_average(
+                issues, order, cycle_time_pipelines)
             if rolling and deviation:
                 rolling_set.append(rolling)
                 deviation_set.append(deviation)
@@ -95,11 +103,19 @@ class ChartResponseView(generic.View):
             'pipelines': list(pipelines)
         }
 
-    def calculate_rolling_average(self, issues, order):
+    def get_cycle_time_values(self, issue, cycle_time_pipelines):
+        if cycle_time_pipelines:
+            return [
+                v for k, v in issue.durations.items()
+                if k in cycle_time_pipelines
+            ]
+        else:
+            return issue.durations.values()
+
+    def calculate_rolling_average(self, issues, order, cycle_time_pipelines):
         """
         http://tinyurl.com/yaybq6g9
         """
-        # TODO: Find a way to use cycle time.
         frame = 9  # TODO: calculate actual frame
         issues_as_list = list(issues)  # optimize to have less queries
         total = len(issues_as_list)
@@ -111,16 +127,20 @@ class ChartResponseView(generic.View):
             issues_as_list[order].latest_transfer_date.timestamp()
         )
         filtered_issues = issues_as_list[order-(frame//2):order+(frame//2)+1]
-        total = sum([sum(i.durations.values()) for i in filtered_issues])
+        total = sum(
+            [sum(self.get_cycle_time_values(i, cycle_time_pipelines))
+                for i in filtered_issues]
+        )
         average = total / (frame)
         average_result = [
             xaxis,
             self._js_time(average)
         ]
-        deviations = sum(
-            [abs(sum(i.durations.values()) - average)
-                for i in filtered_issues]
-        )
+        deviations = sum([
+            abs(sum(self.get_cycle_time_values(i, cycle_time_pipelines))
+                - average)
+            for i in filtered_issues
+        ])
         mean_deviation = deviations / (frame)
         deviation_result = [
             xaxis,
