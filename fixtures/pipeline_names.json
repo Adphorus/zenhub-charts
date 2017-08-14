@@ -1,0 +1,101 @@
+[
+{
+  "model": "issue_tracker.pipelinenamemapping",
+  "pk": 1,
+  "fields": {
+    "repo": 2,
+    "old_name": "New Requests & Features",
+    "new_name": "New Requests"
+  }
+},
+{
+  "model": "issue_tracker.pipelinenamemapping",
+  "pk": 2,
+  "fields": {
+    "repo": 2,
+    "old_name": "Discuss with DS",
+    "new_name": "Data Science Related"
+  }
+},
+{
+  "model": "issue_tracker.pipelinenamemapping",
+  "pk": 3,
+  "fields": {
+    "repo": 2,
+    "old_name": "Data Science",
+    "new_name": "Data Science Related"
+  }
+},
+{
+  "model": "issue_tracker.pipelinenamemapping",
+  "pk": 4,
+  "fields": {
+    "repo": 2,
+    "old_name": "Ready for Development",
+    "new_name": "Ready for development"
+  }
+},
+{
+  "model": "issue_tracker.pipelinenamemapping",
+  "pk": 5,
+  "fields": {
+    "repo": 2,
+    "old_name": "Specs",
+    "new_name": "Writing Specs"
+  }
+},
+{
+  "model": "issue_tracker.pipelinenamemapping",
+  "pk": 6,
+  "fields": {
+    "repo": 2,
+    "old_name": "Preparing specs",
+    "new_name": "Writing Specs"
+  }
+},
+{
+  "model": "issue_tracker.pipelinenamemapping",
+  "pk": 7,
+  "fields": {
+    "repo": 2,
+    "old_name": "Waiting for deployment",
+    "new_name": "Ready for Live"
+  }
+},
+{
+  "model": "issue_tracker.pipelinenamemapping",
+  "pk": 8,
+  "fields": {
+    "repo": 2,
+    "old_name": "Waiting for development",
+    "new_name": "Ready for development"
+  }
+},
+{
+  "model": "issue_tracker.pipelinenamemapping",
+  "pk": 9,
+  "fields": {
+    "repo": 2,
+    "old_name": "Waiting for UX",
+    "new_name": "UX Pipeline"
+  }
+},
+{
+  "model": "issue_tracker.pipelinenamemapping",
+  "pk": 10,
+  "fields": {
+    "repo": 2,
+    "old_name": "UX",
+    "new_name": "UX Pipeline"
+  }
+},
+{
+  "model": "issue_tracker.pipelinenamemapping",
+  "pk": 11,
+  "fields": {
+    "repo": 2,
+    "old_name": "UI",
+    "new_name": "UI Pipeline"
+  }
+}
+]
