@@ -15,7 +15,6 @@ class Pipeline(models.Model):
     name = models.CharField(max_length=255)
     repo = models.ForeignKey('Repo')
     pipeline_id = models.CharField(max_length=255, null=True, blank=True)
-    is_cycle_time_starter = models.BooleanField(default=False)
     order = models.PositiveSmallIntegerField()
 
     def __str__(self):

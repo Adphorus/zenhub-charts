@@ -31,13 +31,6 @@ class ChartResponseView(generic.View):
         issues = Issue.objects.select_related('repo').filter(
             repo__name=repo_name,
         ).exclude(durations={})
-        try:
-            cycle_time_starter = Pipeline.objects.get(
-                repo__name=repo_name, is_cycle_time_starter=True).order
-            cycle_time_pipelines = Pipeline.objects.filter(
-                order__gte=cycle_time_starter).values_list('name', flat=True)
-        except Pipeline.DoesNotExist:
-            cycle_time_pipelines = None
         if since and until:
             since, until = int(float(since)), int(float(until))
             issues = issues.filter(
@@ -53,7 +46,7 @@ class ChartResponseView(generic.View):
         deviation_set = []
         for order, issue in enumerate(issues):
             rolling, deviation = self.calculate_rolling_average(
-                issues, order, cycle_time_pipelines)
+                issues, order, durations)
             if rolling and deviation:
                 rolling_set.append(rolling)
                 deviation_set.append(deviation)
@@ -144,8 +137,8 @@ class ChartResponseView(generic.View):
         mean_deviation = deviations / (frame)
         deviation_result = [
             xaxis,
+            self._js_time(average - abs(mean_deviation)), 
             self._js_time(average + abs(mean_deviation)),
-            self._js_time(average - abs(mean_deviation))
         ]
         return average_result, deviation_result
 
