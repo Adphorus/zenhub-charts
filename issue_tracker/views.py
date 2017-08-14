@@ -110,7 +110,7 @@ class ChartResponseView(generic.View):
         xaxis = self._js_time(
             issues_as_list[order].latest_transfer_date.timestamp()
         )
-        filtered_issues = issues_as_list[order-(frame//2):order+1+(frame//2)]
+        filtered_issues = issues_as_list[order-(frame//2):order(frame//2)+1]
         total = sum([sum(i.durations.values()) for i in filtered_issues])
         average = total / (frame)
         average_result = [
