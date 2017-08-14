@@ -131,14 +131,20 @@ $.getJSON(url + window.location.search, function (data) {
     },
     tooltip: {
       formatter: function(){
+        var body = ''
         if (typeof(this.point) === 'undefined') {
-          return;
-        }
-        var body = '<b>' + this.point.title + '</b><br/>';
-        for (var pipeline in this.point.durations){
-          if (!this.point.durations.hasOwnProperty(pipeline)){continue}
-          var duration = moment.duration(this.point.durations[pipeline]);
-          body += pipeline + ':' + duration.humanize() + '<br/>'
+          var duration = moment.duration(this.points[1].y);
+          var low = moment.duration(this.points[0].point.low);
+          var high = moment.duration(this.points[0].point.high);
+          body += '<b>estimation:</b> ' + duration.humanize();
+          body += '<br/><b>deviation:</b> ' + low.humanize() + ' and ' + high.humanize()
+        } else {
+          body += '<b>' + this.point.title + '</b><br/>';
+          for (var pipeline in this.point.durations){
+            if (!this.point.durations.hasOwnProperty(pipeline)){continue}
+            var duration = moment.duration(this.point.durations[pipeline]);
+            body += '<b>' + pipeline + '</b>:' + duration.humanize() + '<br/>'
+          }
         }
         return body;
       },

@@ -63,18 +63,18 @@ class ChartResponseView(generic.View):
             })
         series = []
         series.append({
-            'id': 'average',
-            'name': 'Average',
-            'data': rolling_set,
-            'color': 'rgba(19, 109, 168, 1)',
-            'type': 'line'})
-
-        series.append({
             'id': 'deviation',
             'name': 'Deviation',
             'data': deviation_set,
             'color': 'rgba(191, 227, 252, 0.1)',
             'type': 'arearange'})
+
+        series.append({
+            'id': 'average',
+            'name': 'Average',
+            'data': rolling_set,
+            'color': 'rgba(19, 109, 168, 1)',
+            'type': 'line'})
 
         duration_totals = [
             self._js_time(sum(i.durations.values())) for i in issues
@@ -96,30 +96,37 @@ class ChartResponseView(generic.View):
         }
 
     def calculate_rolling_average(self, issues, order):
-        timeframe = 4
+        """
+        http://tinyurl.com/yaybq6g9
+        """
+        # TODO: Find a way to use cycle time.
+        frame = 9  # TODO: calculate actual frame
+        issues_as_list = list(issues)  # optimize to have less queries
+        total = len(issues_as_list)
+        if order < frame or total - frame < order - 1:
+            return None, None
         average_result = []
         deviation_result = []
-        if order > timeframe and issues.count() - order > timeframe:
-            js_time = self._js_time(
-                issues[order].latest_transfer_date.timestamp()
-            )
-            filtered_issues = issues[order-timeframe:order+timeframe]
-            total = sum([sum(i.durations.values()) for i in filtered_issues])
-            average = self._js_time(total / (timeframe * 2))
-            average_result = [
-                js_time,
-                average
-            ]
-            deviations = sum(
-                [abs(self._js_time(sum(i.durations.values())) - average)
-                    for i in filtered_issues]
-            )
-            mean_deviation = deviations / (timeframe * 2)
-            deviation_result = [
-                js_time,
-                average + abs(mean_deviation),
-                average - abs(mean_deviation)
-            ]
+        xaxis = self._js_time(
+            issues_as_list[order].latest_transfer_date.timestamp()
+        )
+        filtered_issues = issues_as_list[order-(frame//2):order+1+(frame//2)]
+        total = sum([sum(i.durations.values()) for i in filtered_issues])
+        average = total / (frame)
+        average_result = [
+            xaxis,
+            self._js_time(average)
+        ]
+        deviations = sum(
+            [abs(sum(i.durations.values()) - average)
+                for i in filtered_issues]
+        )
+        mean_deviation = deviations / (frame)
+        deviation_result = [
+            xaxis,
+            self._js_time(average + abs(mean_deviation)),
+            self._js_time(average - abs(mean_deviation))
+        ]
         return average_result, deviation_result
 
     def get_median(self, totals):
