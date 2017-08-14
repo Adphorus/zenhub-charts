@@ -103,14 +103,14 @@ class ChartResponseView(generic.View):
         frame = 9  # TODO: calculate actual frame
         issues_as_list = list(issues)  # optimize to have less queries
         total = len(issues_as_list)
-        if order < frame or total - frame < order - 1:
+        if order < frame // 2 or total - frame // 2 < order - 1:
             return None, None
         average_result = []
         deviation_result = []
         xaxis = self._js_time(
             issues_as_list[order].latest_transfer_date.timestamp()
         )
-        filtered_issues = issues_as_list[order-(frame//2):order(frame//2)+1]
+        filtered_issues = issues_as_list[order-(frame//2):order+(frame//2)+1]
         total = sum([sum(i.durations.values()) for i in filtered_issues])
         average = total / (frame)
         average_result = [
