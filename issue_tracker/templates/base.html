@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>{% block title %}{% endblock title %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/flat-ui/2.3.0/css/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/flat-ui/2.3.0/css/flat-ui.min.css" rel="stylesheet">
+    {% block header %} {% endblock header %}
+  </head>
+  <body>
+    <div class="container">
+      {% block container %} {% endblock container %}
+    </div>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/flat-ui/2.3.0/js/vendor/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/flat-ui/2.3.0/js/flat-ui.min.js"></script>
+    <script src="//code.highcharts.com/stock/highstock.js"></script>
+    <script src="//code.highcharts.com/highcharts-more.js"></script>
+    <script src="//code.highcharts.com/modules/exporting.js"></script> 
+    <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+    {% block footer %} {% endblock footer %}
+
+  </body>
+</html>
