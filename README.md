@@ -1,5 +1,8 @@
 # issues
+
 A temporary repository for issue_tracker application until god goes online
+
+![](https://raw.githubusercontent.com/Adphorus/issues/master/resources/chart.png?token=ABPmHqpoxk7Y29tVKlKuWlqMJrbO8KWbks5ZmtaMwA%3D%3D)
 
 ## Installation
 
