@@ -14,7 +14,9 @@ class Repo(models.Model):
 class Pipeline(models.Model):
     name = models.CharField(max_length=255)
     repo = models.ForeignKey('Repo')
-    pipeline_id = models.CharField(max_length=255, null=True, blank=True)
+    pipeline_id = models.CharField(
+        unique=True,
+        max_length=255)
     order = models.PositiveSmallIntegerField()
 
     def __str__(self):

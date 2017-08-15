@@ -19,20 +19,31 @@ class Fetcher(object):
 
     def create_pipelines(self, repo, pipelines):
         Pipeline.objects.get_or_create(
-            name='Closed', repo=repo,
+            pipeline_id=f"{repo}-closed", name='Closed', repo=repo,
             defaults={
                 'order': 10000  # assuming there is no board with 10000 cols
             }
         )
 
         for order, pipeline in enumerate(pipelines):
-            Pipeline.objects.update_or_create(
-                name=pipeline['name'], repo=repo,
-                defaults={
-                    'pipeline_id': pipeline['id'],
-                    'order': order
-                }
-            )
+            by_id = Pipeline.objects.filter(
+                repo=repo, pipeline_id=pipeline['id'])
+            if by_id.exists() and by_id.first().name != pipeline['name']:
+                # Name changed
+                PipelineNameMapping.objects.create(
+                    repo=repo,
+                    old_name=by_id.first().name,
+                    new_name=pipeline['name']
+                )
+                by_id.update(name=pipeline['name'])
+            else:
+                Pipeline.objects.update_or_create(
+                    pipeline_id=pipeline['id'],
+                    name=pipeline['name'], repo=repo,
+                    defaults={
+                        'order': order
+                    }
+                )
         self.pipelines = {
             p.name: p
             for p in Pipeline.objects.filter(repo=repo)
@@ -69,7 +80,7 @@ class Fetcher(object):
             }
             self.create_transfer(**kwargs)
 
-    def stupid_django_datetime_hack(self, obj):
+    def stupid_django_datetime_hack(self, obj, field_name):
         """
         Django does not call `to_python` on model save,
         so any `DateField` or `DateTimeField` returns string instead.
@@ -77,7 +88,7 @@ class Fetcher(object):
         return [
             i
             for i in obj._meta.fields
-            if i.name == 'transfered_at'
+            if i.name == field_name
         ][0].to_python(obj.transfered_at)
 
     def create_transfer(
@@ -98,7 +109,7 @@ class Fetcher(object):
             except Transfer.DoesNotExist:
                 return
             delta = (
-                self.stupid_django_datetime_hack(transfer)
+                self.stupid_django_datetime_hack(transfer, 'transfered_at')
                 - previous_transfer.transfered_at
             )
             total = issue.durations.get(from_pipeline.name, 0)

@@ -30,6 +30,7 @@ var getPlotLine = function(id, value) {
 $.getJSON(url + window.location.search, function (data) {
   seriesIds = data.series_ids;
   var options = {
+    colors: ['#ff00ff', '#00ffff', '#ff5fd7', '#00ff00', '#ff0000', '#d7005f', '#afafd7', '#af0087', '#af8700', '#d7d787', '#5f5faf', '#d7afaf', '#d75f00', '#8700af', '#005fd7', '#5fd700', '#af5f5f', '#afd7af', '#5f00d7', '#5faf5f', '#00d75f', '#d7ff5f', '#875f87', '#0087af', '#d75fff', '#87afff', '#5fd7ff', '#d787d7', '#87d7d7', '#ff87af', '#00af87', '#5f8787', '#87875f', '#af87ff', '#5fffd7', '#0000ff', '#87af00', '#87ffaf', '#afff87'],
     title: {
       text: 'Adphorus Issues'
     },
@@ -149,7 +150,7 @@ $.getJSON(url + window.location.search, function (data) {
           legendItemClick: function () {
             return false;
           }
-        }
+        } 
       }
     },
     series: data.series
