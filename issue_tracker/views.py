@@ -52,6 +52,8 @@ class ChartResponseView(generic.View):
                 deviation_set.append(deviation)
             pipelines.add(issue.latest_pipeline_name)
             total = sum([v for k, v in issue.durations.items()])
+            pipelines_and_times = self.get_cycle_time_values(
+                        issue, durations, only_values=False)
             raw_data[issue.latest_pipeline_name].append({
                 'x': self._js_time(issue.latest_transfer_date.timestamp()),
                 'y': self._js_time(total),
@@ -59,7 +61,8 @@ class ChartResponseView(generic.View):
                 'issue_number': issue.number,
                 'url': issue.github_url,
                 'durations': {
-                    k: self._js_time(v) for k, v in issue.durations.items()
+                    k: self._js_time(v)
+                    for k, v in pipelines_and_times
                 }
             })
         series = []
@@ -78,7 +81,8 @@ class ChartResponseView(generic.View):
             'type': 'line'})
 
         duration_totals = [
-            self._js_time(sum(i.durations.values())) for i in issues
+            self._js_time(
+                sum(self.get_cycle_time_values(i, durations))) for i in issues
         ]
         median = self.get_median(duration_totals)
         average = self.get_average(duration_totals)
@@ -96,14 +100,24 @@ class ChartResponseView(generic.View):
             'pipelines': list(pipelines)
         }
 
-    def get_cycle_time_values(self, issue, cycle_time_pipelines):
+    def get_cycle_time_values(
+            self, issue, cycle_time_pipelines, only_values=True):
         if cycle_time_pipelines:
-            return [
-                v for k, v in issue.durations.items()
-                if k in cycle_time_pipelines
-            ]
+            if only_values:
+                return [
+                    v for k, v in issue.durations.items()
+                    if k in cycle_time_pipelines
+                ]
+            else:
+                return {
+                    k: v for k, v in issue.durations.items()
+                    if k in cycle_time_pipelines
+                }.items()
         else:
-            return issue.durations.values()
+            if only_values:
+                return issue.durations.values()
+            else:
+                return issue.durations.items()
 
     def calculate_rolling_average(self, issues, order, cycle_time_pipelines):
         """
@@ -137,7 +151,7 @@ class ChartResponseView(generic.View):
         mean_deviation = deviations / (frame)
         deviation_result = [
             xaxis,
-            self._js_time(average - abs(mean_deviation)), 
+            self._js_time(average - abs(mean_deviation)),
             self._js_time(average + abs(mean_deviation)),
         ]
         return average_result, deviation_result
