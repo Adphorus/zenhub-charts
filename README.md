@@ -8,6 +8,8 @@ See the [blog post](http://blog.adphorus.com) for more detail.
 
 ## Installation
 
+Install [Redis](https://redis.io/).
+
 Create virtualenv using `python>=3.6`.
 
 Install requirements:
