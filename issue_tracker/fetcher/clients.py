@@ -20,7 +20,8 @@ class BaseClient(object):
     )
     def request(self, endpoint, method, *args, **kwargs):
         response = requests.request(
-            method, endpoint, headers=self._authentication_header)
+            method, endpoint, headers=self._authentication_header,
+            *args, **kwargs)
         response.raise_for_status()
         self._deal_with_limits(response)
         return response
@@ -49,12 +50,39 @@ class GithubClient(BaseClient):
             f'{self.base_url}/repos/{self.owner}/{repo}/issues/{issue_number}'
         )
 
+    def get_issues(self, repo, iterate=False, **params):
+        endpoint = f'{self.base_url}/repos/{self.owner}/{repo}/issues'
+        if iterate:
+            page = 1
+            while True:
+                params.update({'page': page})
+                page += 1
+                result = self.get(endpoint, params=params)
+                if not result:
+                    break
+                yield result
+        else:
+            return self.get(
+                endpoint,
+                params=params
+            )
+
     @property
     def _authentication_header(self):
         return {'Authorization': f'token {self.token}'}
 
     def _deal_with_limits(self, response):
-        return 0  # TODO: Deal with it later
+        limit = int(response.headers['X-RateLimit-Limit'])
+        remaining = int(response.headers['X-RateLimit-Remaining'])
+        used = limit - remaining
+        wait_until = int(response.headers['X-RateLimit-Reset'])
+        wait = (wait_until - datetime.now().timestamp())
+        logger.info(
+            f'Github Request limit: {used} of {limit}, {wait} seconds to reset'
+        )
+        if limit - used <= 5:
+            logger.warning(f'sleeping {wait} seconds')
+            sleep(wait)
 
 
 class ZenhubClient(BaseClient):
@@ -82,7 +110,8 @@ class ZenhubClient(BaseClient):
         wait_until = int(response.headers['X-RateLimit-Reset'])
         wait = (wait_until - datetime.now().timestamp())
         logger.info(
-            f'Request limit: {used} of {limit}, {wait} seconds to reset')
+            f'Zenhub Request limit: {used} of {limit}, {wait} seconds to reset'
+        )
         if limit - used <= 5:
             logger.warning(f'sleeping {wait} seconds')
             sleep(wait)

@@ -3,16 +3,23 @@ var qs = new URLSearchParams(window.location.search);
 var repo = qs.get('repo');
 var durations = qs.get('durations');
 
-var getPlotLine = function(id, value) {
+var getPlotLine = function(id, value, title) {
   var duration = moment.duration(value); 
   var conf = {
     median: {
       color: 'red',
-      text: 'Median (' + duration.humanize() + ')'
+      text: 'Median (' + duration.humanize() + ')',
+      align: 'left'
     },
     average: {
       color: 'green',
-      text: 'Average (' + duration.humanize() + ')'
+      text: 'Average (' + duration.humanize() + ')',
+      align: 'left'
+    },
+    percentile: {
+      color: 'gray',
+      text: title + ' (' + duration.humanize() + ')',
+      align: 'center'
     }
   };
   return {
@@ -22,7 +29,8 @@ var getPlotLine = function(id, value) {
     dashStyle: 'shortdash',
     width: 2,
     label: {
-      text: conf[id]['text']
+      text: conf[id]['text'],
+      align: conf[id]['align']
     }
   }
 }
@@ -32,7 +40,7 @@ $.getJSON(url + window.location.search, function (data) {
   var options = {
     colors: ['#ff00ff', '#00ffff', '#ff5fd7', '#00ff00', '#ff0000', '#d7005f', '#afafd7', '#af0087', '#af8700', '#d7d787', '#5f5faf', '#d7afaf', '#d75f00', '#8700af', '#005fd7', '#5fd700', '#af5f5f', '#afd7af', '#5f00d7', '#5faf5f', '#00d75f', '#d7ff5f', '#875f87', '#0087af', '#d75fff', '#87afff', '#5fd7ff', '#d787d7', '#87d7d7', '#ff87af', '#00af87', '#5f8787', '#87875f', '#af87ff', '#5fffd7', '#0000ff', '#87af00', '#87ffaf', '#afff87'],
     title: {
-      text: 'Adphorus Issues'
+      text: 'Cycle Time Chart'
     },
     xAxis: {
       type: 'datetime',
@@ -54,6 +62,19 @@ $.getJSON(url + window.location.search, function (data) {
           endpoint.setSearch('durations', durations);
           $.getJSON(endpoint,
             function(newData){
+              this.chart.yAxis[0].removePlotLine('percentile');
+              this.chart.yAxis[0].addPlotLine(
+                getPlotLine('percentile', newData.percentiles[0], '25%')
+              );
+              this.chart.yAxis[0].addPlotLine(
+                getPlotLine('percentile', newData.percentiles[1], '50%')
+              );
+              this.chart.yAxis[0].addPlotLine(
+                getPlotLine('percentile', newData.percentiles[2], '75%')
+              );
+              this.chart.yAxis[0].addPlotLine(
+                getPlotLine('percentile', newData.percentiles[3], '90%')
+              );
               this.chart.yAxis[0].removePlotLine('median');
               this.chart.yAxis[0].removePlotLine('average');
               this.chart.yAxis[0].addPlotLine(
@@ -77,6 +98,10 @@ $.getJSON(url + window.location.search, function (data) {
         text: 'Duration'
       },
       plotLines: [
+        getPlotLine('percentile', data.percentiles[0], '25%'), 
+        getPlotLine('percentile', data.percentiles[1], '50%'),
+        getPlotLine('percentile', data.percentiles[2], '75%'),
+        getPlotLine('percentile', data.percentiles[3], '90%'),
         getPlotLine('median', data.median),
         getPlotLine('average', data.average)
       ],

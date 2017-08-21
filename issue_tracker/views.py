@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import statistics
 from collections import defaultdict
 
@@ -32,10 +32,16 @@ class ChartResponseView(generic.View):
             repo__name=repo_name,
         ).exclude(durations={})
         if since and until:
-            since, until = int(float(since)), int(float(until))
+            since = self._py_datetime(int(float(since)))
+            until = self._py_datetime(int(float(until)))
             issues = issues.filter(
-                latest_transfer_date__gte=self._py_datetime(since),
-                latest_transfer_date__lte=self._py_datetime(until)
+                latest_transfer_date__gte=since,
+                latest_transfer_date__lte=until
+            )
+        else:
+            since = datetime.now() - timedelta(days=365)
+            issues = issues.filter(
+                latest_transfer_date__gte=since
             )
         if durations:
             issues = issues.filter(durations__has_any_keys=durations)
@@ -86,6 +92,7 @@ class ChartResponseView(generic.View):
         ]
         median = self.get_median(duration_totals)
         average = self.get_average(duration_totals)
+        percentiles = self.get_percentiles(duration_totals)
 
         for key, data in raw_data.items():
             data = sorted(data, key=lambda x: x['x'])
@@ -97,6 +104,7 @@ class ChartResponseView(generic.View):
             'series': series,
             'median': median,
             'average': average,
+            'percentiles': percentiles,
             'pipelines': list(pipelines)
         }
 
@@ -167,6 +175,12 @@ class ChartResponseView(generic.View):
         if total:
             return sum(totals) / total
         return 0
+
+    def get_percentiles(self, totals):
+        ordered = sorted(totals)
+        total = len(ordered)
+        percents = [0.25, 0.50, 0.75, 0.90]
+        return [ordered[int(total*i)] for i in percents]
 
     def _js_time(self, ts):
         """

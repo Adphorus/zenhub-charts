@@ -11,8 +11,10 @@ logger = logging.getLogger(__name__)
 
 
 class Fetcher(object):
-    def __init__(self, repo_names):
+    def __init__(self, repo_names, initial=False, fix=False):
         self.repo_names = repo_names
+        self.initial = initial
+        self.fix = fix
         self.github = GithubClient(**settings.GITHUB)
         self.zenhub = ZenhubClient(**settings.ZENHUB)
         self.pipelines = {}
@@ -44,15 +46,18 @@ class Fetcher(object):
                         'order': order
                     }
                 )
-        self.pipelines = {
-            p.name: p
-            for p in Pipeline.objects.filter(repo=repo)
-        }
+        self.pipelines = self.get_pipelines(repo)
         self.first_pipeline = Pipeline.objects.filter(
             repo=repo).earliest('order')
         self.pipeline_name_mapping = dict(PipelineNameMapping.objects.filter(
             repo=repo
         ).values_list('old_name', 'new_name'))
+
+    def get_pipelines(self, repo):
+        return {
+            p.name: p
+            for p in Pipeline.objects.filter(repo=repo)
+        }
 
     def get_issue_numbers(self, pipelines):
         return [
@@ -61,9 +66,17 @@ class Fetcher(object):
             for item in sublist
         ]
 
-    def close_issues(self, current_issue_numbers, remote_issue_numbers):
-        must_be_closed = set(current_issue_numbers) - set(remote_issue_numbers)
-        closed_issues = Issue.objects.filter(number__in=must_be_closed)
+    def close_issues(
+            self, repo, current_issue_numbers, remote_issue_numbers, extra=[]):
+        must_be_closed = list(
+            set(current_issue_numbers) - set(remote_issue_numbers)
+        )
+        must_be_closed += extra
+        must_be_closed = set(must_be_closed)
+        closed_issues = Issue.objects.filter(
+            repo=repo,
+            number__in=must_be_closed
+        ).exclude(latest_pipeline_name='Closed')
         for closed_issue in closed_issues:
             github_issue = self.github.get_issue(
                 closed_issue.repo.name, closed_issue.number)
@@ -121,10 +134,38 @@ class Fetcher(object):
             logger.info(f'created duration')
 
     def get_pipeline(self, repo, name):
+        def select_one(pipeline_names):
+            try:
+                selected_index = int(input('Select one: '))
+                return pipeline_names[selected_index]
+            except ValueError:
+                print('Input an integer value')
+            except IndexError:
+                print('Pipeline not in the list')
+            except:
+                print('An error occured')
+            return select_one(pipeline_names)
+
         try:
             return self.pipelines[self.pipeline_name_mapping.get(name, name)]
         except KeyError:
-            raise PipelineNotFoundError(repo, name)
+            if self.fix:
+                print(
+                    f'\n\nCould not find "{name}" on the "{repo}" board. '
+                    'These are the options:'
+                )
+                pipeline_names = list(self.pipelines.keys())
+                for index, pipeline in enumerate(pipeline_names):
+                    print(f'[{index}]: {pipeline}')
+                new_name = select_one(pipeline_names)
+                PipelineNameMapping.objects.create(
+                    repo=repo, old_name=name, new_name=new_name
+                )
+                self.pipelines[new_name] = self.pipelines[new_name]
+                self.pipeline_name_mapping[name] = new_name
+                return self.pipelines[new_name]
+            else:
+                raise PipelineNotFoundError(repo, name)
 
     def get_issue_events(self, repo, issue_number):
         github_issue = self.github.get_issue(repo.name, issue_number)
@@ -160,6 +201,16 @@ class Fetcher(object):
             }
             self.create_transfer(**kwargs)
 
+    def get_closed_issue_numbers_from_github(self, repo):
+        closed_github_issue_numbers = []
+        if self.fix:
+            pages = self.github.get_issues(
+                repo=repo.name, iterate=True, assignee='*', state='closed')
+            for page in pages:
+                for issue in page:
+                    closed_github_issue_numbers.append(issue['number'])
+        return closed_github_issue_numbers
+
     def sync(self):
         repos = Repo.objects.all()
         if self.repo_names:
@@ -168,11 +219,19 @@ class Fetcher(object):
             current_issues = repo.issues.all()
             board = self.zenhub.get_board(repo.repo_id)
             self.create_pipelines(repo, board['pipelines'])
+            closed_github_issue_numbers = \
+                self.get_closed_issue_numbers_from_github(repo)
             remote_issue_numbers = self.get_issue_numbers(board['pipelines'])
+            remote_issue_numbers += closed_github_issue_numbers
             current_issue_numbers = current_issues.values_list(
                 'number', flat=True)
 
             for issue_number in remote_issue_numbers:
                 self.get_issue_events(repo, issue_number)
 
-            self.close_issues(current_issue_numbers, remote_issue_numbers)
+            self.close_issues(
+                repo,
+                current_issue_numbers,
+                remote_issue_numbers,
+                extra=closed_github_issue_numbers
+            )
