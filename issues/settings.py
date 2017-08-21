@@ -125,6 +125,10 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis'
+
+
 GITHUB = {
     'token': 'c1e9ad8ddfd08c236a5ed43107f2fd5cb329da73',
     'base_url': 'https://api.github.com',
