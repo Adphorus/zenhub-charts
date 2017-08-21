@@ -128,20 +128,6 @@ STATIC_URL = '/static/'
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_RESULT_BACKEND = 'redis'
 
-
-GITHUB = {
-    'token': 'c1e9ad8ddfd08c236a5ed43107f2fd5cb329da73',
-    'base_url': 'https://api.github.com',
-    'owner': 'Adphorus',
-}
-ZENHUB = {
-    'token': (
-        '4bccdc55a631ab0f106dc805218191a3978e4e43bc0b014372a'
-        'd9be733f955522ba0c9d45f539b1b'
-    ),
-    'base_url': 'https://api.zenhub.io/p1'
-}
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
