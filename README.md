@@ -1,23 +1,33 @@
-# issues
+# Zenhub Cycle Time Chart
 
-A temporary repository for issue_tracker application until god goes online
+Zenhub Cycle Time Chart let's you visualize cycle times on your Zenhub board.
 
 ![](https://raw.githubusercontent.com/Adphorus/issues/master/resources/chart.png?token=ABPmHqpoxk7Y29tVKlKuWlqMJrbO8KWbks5ZmtaMwA%3D%3D)
 
+See the [blog post](http://blog.adphorus.com) for more detail.
+
 ## Installation
 
-Create virtualenv using python>=3.6
+Create virtualenv using `python>=3.6`.
 
 Install requirements:
 
 ```
-pip install -r requirements/dev.txt
+pip install -r requirements/base.txt
 ```
 
 Create postgresql database:
 
 ```
 createdb issue_tracker
+```
+
+### Development settings
+
+Install requirements:
+
+```
+pip install -r requirements/dev.txt
 ```
 
 Copy settings:
@@ -34,12 +44,6 @@ export DJANGO_SETTINGS_MODULE='issues.settings_dev'
 
 (Better set and unset this in your virtualenv's `bin/activate` script)
 
-Load Fixtures:
-
-```
-./manage.py loaddata fixtures/repos.json
-./manage.py loaddata fixtures/pipeline_names.json
-```
 
 
 ## Configuration
@@ -90,3 +94,21 @@ celery -A issues worker -B -l info
 ```
 
 A periodic task will fetch new issues every 3 hours.
+
+## Run the server
+
+```
+./manage.py runserver
+```
+
+Visit [http://localhost:8000](http://localhost:8000)
+
+## Admin
+
+In order to use the admin, run:
+
+```
+./manage.py createsuperuser
+```
+
+go to [http://localhost:8000/admin](http://localhost:8000/admin)
