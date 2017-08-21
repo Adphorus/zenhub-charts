@@ -42,6 +42,26 @@ Load Fixtures:
 ```
 
 
+## Configuration
+
+In order to fetch issues from both `Github` and `Zenhub`, you need to specify your tokens.
+
+* [Get your Zenhub token](https://dashboard.zenhub.io/#/settings)
+* [Get your Github token](https://github.com/settings/tokens)
+
+```
+GITHUB = {
+    'token': '<your token>',
+    'base_url': 'https://api.github.com',
+    'owner': '<Organization or user name>'
+}
+ZENHUB = {
+    'token': '<your token>',
+    'base_url': 'https://api.zenhub.io/p1'
+}
+```
+
+
 ## Getting Issues from Github and Zenhub
 
 It is currently a manual process
@@ -53,4 +73,20 @@ It is currently a manual process
 * **initial:** Run the command for the first time. It may ask you questions about pipeline name mappings. We can not track previous name changes, so you have to define them on the first run.
 * **fix:** If `--initial` is specified, you do not need to give this parameter. This parameter let's us fetch previously closed issues.
 
+### Periodic tasks
 
+First of all configure your broker.
+
+```
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis'
+```
+
+Then run Celery with beat (`-B`) support.
+
+
+```
+celery -A issues worker -B -l info
+```
+
+A periodic task will fetch new issues every 3 hours.
