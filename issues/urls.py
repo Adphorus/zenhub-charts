@@ -15,8 +15,7 @@ Including another URLconf
 """
 from django.conf.urls import url, include
 from django.contrib import admin
-
-import debug_toolbar
+from django.conf import settings
 
 
 urlpatterns = [
@@ -24,7 +23,8 @@ urlpatterns = [
     url(r'', include('issue_tracker.urls'))
 ]
 
-
-urlpatterns = [
-    url(r'^__debug__/', include(debug_toolbar.urls)),
-] + urlpatterns
+if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns = [
+        url(r'^__debug__/', include(debug_toolbar.urls)),
+    ] + urlpatterns
