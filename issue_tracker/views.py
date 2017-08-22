@@ -177,6 +177,8 @@ class ChartResponseView(generic.View):
         return 0
 
     def get_percentiles(self, totals):
+        if not totals:
+            return [0, 0, 0, 0]
         ordered = sorted(totals)
         total = len(ordered)
         percents = [0.25, 0.50, 0.75, 0.90]

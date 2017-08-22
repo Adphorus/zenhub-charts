@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class BaseClient(object):
     def __init__(self, *args, **kwargs):
-        self.base_url = kwargs.pop('base_url')
+        self.base_url = kwargs.pop('base_url') or self.BASE_URL
         self.token = kwargs.pop('token')
 
     @backoff.on_exception(
@@ -38,6 +38,8 @@ class BaseClient(object):
 
 
 class GithubClient(BaseClient):
+    BASE_URL = 'https://api.github.com'
+
     def __init__(self, *args, **kwargs):
         super(GithubClient, self).__init__(*args, **kwargs)
         self.owner = kwargs.pop('owner')
@@ -86,6 +88,8 @@ class GithubClient(BaseClient):
 
 
 class ZenhubClient(BaseClient):
+    BASE_URL = 'https://api.zenhub.io/p1'
+
     def get_board(self, repo_id):
         return self.get(f'{self.base_url}/repositories/{repo_id}/board')
 

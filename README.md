@@ -24,6 +24,12 @@ Create postgresql database:
 createdb issue_tracker
 ```
 
+Run migrations
+
+```
+./manage.py migrate
+```
+
 ### Development settings
 
 Install requirements:
@@ -53,17 +59,18 @@ export DJANGO_SETTINGS_MODULE='issues.settings_dev'
 In order to fetch issues from both `Github` and `Zenhub`, you need to specify your tokens.
 
 * [Get your Zenhub token](https://dashboard.zenhub.io/#/settings)
-* [Get your Github token](https://github.com/settings/tokens)
+* [Get your Github token](https://github.com/settings/tokens) (Select repo scope)
+
+![repo](resources/github_scope.png)
+
 
 ```
 GITHUB = {
     'token': '<your token>',
-    'base_url': 'https://api.github.com',
     'owner': '<Organization or user name>'
 }
 ZENHUB = {
-    'token': '<your token>',
-    'base_url': 'https://api.zenhub.io/p1'
+    'token': '<your token>'
 }
 ```
 
