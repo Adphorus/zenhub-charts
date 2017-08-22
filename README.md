@@ -1,6 +1,6 @@
-# Zenhub Cycle Time Chart
+# ZenHub Cycle Time Chart
 
-Zenhub Cycle Time Chart let's you visualize cycle times on your Zenhub board.
+ZenHub Cycle Time Chart let's you visualize cycle times on your ZenHub board.
 
 ![](https://raw.githubusercontent.com/Adphorus/issues/master/resources/chart.png?token=ABPmHqpoxk7Y29tVKlKuWlqMJrbO8KWbks5ZmtaMwA%3D%3D)
 
@@ -56,13 +56,12 @@ export DJANGO_SETTINGS_MODULE='issues.settings_dev'
 
 ## Configuration
 
-In order to fetch issues from both `Github` and `Zenhub`, you need to specify your tokens.
+In order to fetch issues from both `GitHub` and `ZenHub`, you need to specify your tokens.
 
-* [Get your Zenhub token](https://dashboard.zenhub.io/#/settings)
-* [Get your Github token](https://github.com/settings/tokens) (Select repo scope)
+* [Get your ZenHub token](https://dashboard.zenhub.io/#/settings)
+* [Get your GitHub token](https://github.com/settings/tokens) (Select repo scope)
 
 ![repo](resources/github_scope.png)
-
 
 ```
 GITHUB = {
@@ -75,7 +74,7 @@ ZENHUB = {
 ```
 
 
-## Getting Issues from Github and Zenhub
+## Getting Issues from GitHub and ZenHub
 
 It is currently a manual process
 
