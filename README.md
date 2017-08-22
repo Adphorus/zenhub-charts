@@ -82,8 +82,9 @@ It is currently a manual process
 ./manage.py fetch --initial
 ```
 
-* **initial:** Run the command for the first time. It may ask you questions about pipeline name mappings. We can not track previous name changes, so you have to define them on the first run.
-* **fix:** If `--initial` is specified, you do not need to give this parameter. This parameter let's us fetch previously closed issues.
+* **initial:** Run the command for the first time. This parameter let's us fetch previously closed issues. 
+* **fix:** If `--initial` is specified, you do not need to give this parameter. It may ask you questions about pipeline name mappings. We can not track previous name changes, so you have to define them on the first run. Otherwise you can just give this parameter and add new name changes without running another `--initial` fetch.
+
 
 ### Periodic tasks
 
