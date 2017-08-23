@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from issue_tracker.models import (
+from boards.models import (
     Repo, Issue, Pipeline, PipelineNameMapping, Transfer
 )
 

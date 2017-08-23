@@ -39,20 +39,20 @@ pip install -r requirements/dev.txt
 Copy settings:
 
 ```
-cp issues/settings_dev.py-dist issues/settings_dev.py
+cp zenhub_charts/settings_dev.py-dist zenhub_charts/settings_dev.py
 ```
 
 Specify settings module:
 
 ```
-export DJANGO_SETTINGS_MODULE='issues.settings_dev'
+export DJANGO_SETTINGS_MODULE='zenhub_charts.settings_dev'
 ```
 
 (Better set and unset this in your virtualenv's `bin/activate` script)
 
 ### Extra settings
 
-`settings.DEBUG` is `False` by default. But this won't allow serving static files with development server. So you can override anything in `issues/settings_local.py`.
+`settings.DEBUG` is `False` by default. But this won't allow serving static files with development server. So you can override anything in `zenhub_charts/settings_local.py`.
 
 ## Configuration
 
@@ -63,10 +63,10 @@ In order to fetch issues from both `GitHub` and `ZenHub`, you need to specify yo
 
 ![repo](resources/github_scope.png)
 
-create a file called `credentials.py` under `issues` directory:
+create a file called `credentials.py` under `zenhub_charts` directory:
 
 ```
-# issues/credentials.py
+# zenhub_charts/credentials.py
 
 GITHUB = {
     'token': '<your token>',
@@ -84,7 +84,7 @@ ZENHUB = {
 Create postgresql database:
 
 ```
-createdb issue_tracker
+createdb zenhub_charts
 ```
 
 Run migrations
@@ -119,7 +119,7 @@ Then run Celery with beat (`-B`) support.
 
 
 ```
-celery -A issues worker -B -l info
+celery -A zenhub_charts worker -B -l info
 ```
 
 A periodic task will fetch new issues every 3 hours.

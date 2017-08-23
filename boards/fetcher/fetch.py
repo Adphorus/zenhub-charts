@@ -1,9 +1,9 @@
 import logging
 from django.conf import settings
 
-from issue_tracker.fetcher.clients import GithubClient, ZenhubClient
-from issue_tracker.fetcher.exceptions import PipelineNotFoundError
-from issue_tracker.models import (
+from boards.fetcher.clients import GithubClient, ZenhubClient
+from boards.fetcher.exceptions import PipelineNotFoundError
+from boards.models import (
     Repo, Pipeline, PipelineNameMapping, Issue, Transfer
 )
 

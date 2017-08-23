@@ -1,8 +1,8 @@
 from celery.schedules import crontab
 from celery.task import periodic_task
 
-from issue_tracker.fetcher.fetch import Fetcher
-from issue_tracker.models import Repo
+from boards.fetcher.fetch import Fetcher
+from boards.models import Repo
 
 
 @periodic_task(run_every=crontab(minute=0, hour='*/3'),  # every 3 hours

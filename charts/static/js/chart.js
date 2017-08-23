@@ -1,4 +1,4 @@
-var url = '/chart-data/';
+var url = '/cycle-time/chart-data/';
 var qs = new URLSearchParams(window.location.search);
 var repo = qs.get('repo');
 var durations = qs.get('durations');

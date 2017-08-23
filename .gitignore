@@ -100,7 +100,7 @@ ENV/
 # mypy
 .mypy_cache/
 
-issues/settings_dev.py
-issues/settings_local.py
+zenhub_charts/settings_dev.py
+zenhub_charts/settings_local.py
 /static
-issues/credentials.py
+zenhub_charts/credentials.py

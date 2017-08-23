@@ -5,11 +5,11 @@ from collections import defaultdict
 from django.http import JsonResponse
 from django.views import generic
 
-from .models import Issue, Pipeline, Repo
+from boards.models import Issue, Pipeline, Repo
 
 
 class ChartView(generic.TemplateView):
-    template_name = 'issue_tracker/chart.html'
+    template_name = 'charts/chart.html'
 
     def get_context_data(self, *args, **kwargs):
         repo_name = self.request.GET.get('repo')

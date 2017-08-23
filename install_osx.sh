@@ -20,7 +20,7 @@ mkvirtualenv --python=$(which python3.6) zenhub_cycle_time
 workon zenhub_cycle_time
 setvirtualenvproject
 pip install -r requirements/base.txt
-echo "DEBUG = True" > issues/settings_local.py
+echo "DEBUG = True" > zenhub_charts/settings_local.py
 
 echo "Github token: "
 read github_token
@@ -31,13 +31,13 @@ read user
 echo "Zenhub token: "
 read zenhub_token
 
-cat >issues/credentials.py <<EOL
+cat >zenhub_charts/credentials.py <<EOL
 GITHUB = {'token': '$github_token', 'owner': '$user'}
 ZENHUB = {'token': '$zenhub_token'}
 EOL
 
-dropdb issue_tracker
-createdb issue_tracker
+dropdb zenhub_charts
+createdb zenhub_charts
 ./manage.py migrate
 
 ./manage.py fetch --initial

@@ -1,9 +1,9 @@
 from django.core.management.base import BaseCommand
 from django.conf import settings
 
-from issue_tracker.fetcher.clients import GithubClient, ZenhubClient
-from issue_tracker.fetcher.fetch import Fetcher
-from issue_tracker.models import Repo
+from boards.fetcher.clients import GithubClient, ZenhubClient
+from boards.fetcher.fetch import Fetcher
+from boards.models import Repo
 
 
 class Command(BaseCommand):
