@@ -101,4 +101,6 @@ ENV/
 .mypy_cache/
 
 issues/settings_dev.py
+issues/settings_local.py
 /static
+issues/credentials.py

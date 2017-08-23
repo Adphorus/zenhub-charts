@@ -8,7 +8,7 @@ See the [blog post](http://blog.adphorus.com) for more detail.
 
 ## Installation
 
-Install [Redis](https://redis.io/).
+Install [Redis](https://redis.io/) and [PostgreSQL](https://www.postgresql.org/). (This application is dependent on PostgreSQL's JSONB field.)
 
 Create virtualenv using `python>=3.6`.
 
@@ -16,18 +16,6 @@ Install requirements:
 
 ```
 pip install -r requirements/base.txt
-```
-
-Create postgresql database:
-
-```
-createdb issue_tracker
-```
-
-Run migrations
-
-```
-./manage.py migrate
 ```
 
 ### Development settings
@@ -52,7 +40,9 @@ export DJANGO_SETTINGS_MODULE='issues.settings_dev'
 
 (Better set and unset this in your virtualenv's `bin/activate` script)
 
+### Extra settings
 
+`settings.DEBUG` is `False` by default. But this won't allow serving static files with development server. So you can override anything in `issues/settings_local.py`.
 
 ## Configuration
 
@@ -63,7 +53,11 @@ In order to fetch issues from both `GitHub` and `ZenHub`, you need to specify yo
 
 ![repo](resources/github_scope.png)
 
+create a file called `credentials.py` under `issues` directory:
+
 ```
+# issues/credentials.py
+
 GITHUB = {
     'token': '<your token>',
     'owner': '<Organization or user name>'
@@ -71,6 +65,22 @@ GITHUB = {
 ZENHUB = {
     'token': '<your token>'
 }
+```
+
+`settings.py` will try to read this file.
+
+## Preparing the database
+
+Create postgresql database:
+
+```
+createdb issue_tracker
+```
+
+Run migrations
+
+```
+./manage.py migrate
 ```
 
 

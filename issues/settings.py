@@ -9,8 +9,11 @@ https://docs.djangoproject.com/en/1.11/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.11/ref/settings/
 """
-
 import os
+try:
+    from issues.credentials import *
+except ImportError:
+    raise ImportError("Don't forget to create issues/credentials.py")
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -23,7 +26,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '+89xi5k90*i#adl8zm0y(7x7k39e1*c6jm)3t!q*!q*n47%fw9'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = []
 
@@ -146,3 +149,8 @@ LOGGING = {
 }
 
 ALLOWED_HOSTS = ['*']
+
+try:
+    from issues.settings_local import *
+except ImportError:
+    pass
