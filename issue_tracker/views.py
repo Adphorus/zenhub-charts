@@ -57,9 +57,9 @@ class ChartResponseView(generic.View):
                 rolling_set.append(rolling)
                 deviation_set.append(deviation)
             pipelines.add(issue.latest_pipeline_name)
-            total = sum([v for k, v in issue.durations.items()])
             pipelines_and_times = self.get_cycle_time_values(
                         issue, durations, only_values=False)
+            total = sum(dict(pipelines_and_times).values())
             raw_data[issue.latest_pipeline_name].append({
                 'x': self._js_time(issue.latest_transfer_date.timestamp()),
                 'y': self._js_time(total),
@@ -182,7 +182,9 @@ class ChartResponseView(generic.View):
         ordered = sorted(totals)
         total = len(ordered)
         percents = [0.25, 0.50, 0.75, 0.90]
-        return [ordered[int(total*i)] for i in percents]
+        results = [ordered[int(total*i)] for i in percents]
+        results[1] = self.get_median(totals)  # quick & dirty way to get mean
+        return results
 
     def _js_time(self, ts):
         """
