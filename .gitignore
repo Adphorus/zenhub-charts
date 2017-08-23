@@ -101,3 +101,4 @@ ENV/
 .mypy_cache/
 
 issues/settings_dev.py
+/static
