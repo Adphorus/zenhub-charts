@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class BaseClient(object):
     def __init__(self, *args, **kwargs):
-        self.base_url = kwargs.pop('base_url') or self.BASE_URL
+        self.base_url = kwargs.get('base_url', self.BASE_URL)
         self.token = kwargs.pop('token')
 
     @backoff.on_exception(
