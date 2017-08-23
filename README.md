@@ -8,6 +8,16 @@ See the [blog post](http://blog.adphorus.com) for more detail.
 
 ## Installation
 
+### Installation on Os X
+
+There is an installation script which handles all the steps below. Run:
+
+```
+./install_osx.sh
+```
+
+### Manual Installation
+
 Install [Redis](https://redis.io/) and [PostgreSQL](https://www.postgresql.org/). (This application is dependent on PostgreSQL's JSONB field.)
 
 Create virtualenv using `python>=3.6`.
