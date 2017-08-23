@@ -1,5 +1,6 @@
 from .settings import *  # noqa
 
+DEBUG = True
 
 INSTALLED_APPS += [  # noqa
     'debug_toolbar',
