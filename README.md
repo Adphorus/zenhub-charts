@@ -4,7 +4,7 @@ ZenHub Cycle Time Chart let's you visualize cycle times on your ZenHub board.
 
 ![](resources/chart.png)
 
-See the [blog post](http://blog.adphorus.com) for more detail.
+See the [blog post](https://medium.com/adphorus-engineering/introducing-cycle-time-for-zenhub-3101509187c8) for more detail.
 
 ## Installation
 
