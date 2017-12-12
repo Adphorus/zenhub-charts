@@ -15,7 +15,6 @@ class Pipeline(models.Model):
     name = models.CharField(max_length=255)
     repo = models.ForeignKey('Repo')
     pipeline_id = models.CharField(
-        unique=True,
         max_length=255)
     order = models.PositiveSmallIntegerField()
 
@@ -23,7 +22,7 @@ class Pipeline(models.Model):
         return self.name
 
     class Meta:
-        unique_together = (('name', 'repo', ), )
+        unique_together = (('pipeline_id', 'repo', ), )
 
 
 class PipelineNameMapping(models.Model):
