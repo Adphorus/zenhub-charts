@@ -3,6 +3,8 @@ import statistics
 from collections import defaultdict
 
 from django.http import JsonResponse
+from django.shortcuts import redirect
+from django.urls import reverse
 from django.views import generic
 
 from boards.models import Issue, Pipeline, Repo
@@ -11,17 +13,24 @@ from boards.models import Issue, Pipeline, Repo
 class ChartView(generic.TemplateView):
     template_name = 'charts/chart.html'
 
-    def get_context_data(self, *args, **kwargs):
-        repo_name = self.request.GET.get('repo')
+    def get(self, *args, **kwargs):
+        repo = self.request.GET.get('repo')
         repos = Repo.objects.values_list('name', flat=True)
-        durations = self.request.GET.get('durations')
-        durations = durations.split(',') if durations else []
+        if not repo:
+            return redirect(reverse('chart') + '?repo=' + repos[0])
+        durations_param = self.request.GET.get('durations')
+        durations = durations.split(',') if durations_param else []
+        context = self.get_context_data(
+            repo=repo, repos=repos, durations=durations, **kwargs)
+        return self.render_to_response(context)
+
+    def get_context_data(self, repo, repos, durations, *args, **kwargs):
         context = super(ChartView, self).get_context_data(*args, **kwargs)
         pipelines = Pipeline.objects.filter(
-            repo__name=repo_name
+            repo__name=repo
         ).values_list('name', flat=True).order_by('order')
         context['pipelines'] = {i: i in durations for i in pipelines}
-        context['repos'] = {i: i == repo_name for i in repos}
+        context['repos'] = {i: i == repo for i in repos}
         return context
 
 
