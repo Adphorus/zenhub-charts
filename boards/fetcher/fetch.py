@@ -173,7 +173,8 @@ class Fetcher(object):
             repo.repo_id, issue_number)
         issue, created = Issue.objects.update_or_create(
             repo=repo, number=issue_number,
-            defaults={'title': github_issue['title']}
+            defaults={'title': github_issue['title']},
+            latest_transfer_date=github_issue['created_at']
         )
         transfers = [
             i for i in zenhub_issue_events if i['type'] == 'transferIssue']
