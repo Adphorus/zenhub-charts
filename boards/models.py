@@ -47,7 +47,7 @@ class Issue(models.Model):
     title = models.CharField(max_length=255)
     durations = JSONField(default=dict)
     latest_pipeline_name = models.CharField(max_length=255)
-    latest_transfer_date = models.DateTimeField(null=True, blank=True)
+    latest_transfer_date = models.DateTimeField()
 
     def __str__(self):
         return f'{self.repo}/{self.title}/{self.number}'
