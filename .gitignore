@@ -104,3 +104,5 @@ zenhub_charts/settings_dev.py
 zenhub_charts/settings_local.py
 /static
 zenhub_charts/credentials.py
+
+.DS_Store
