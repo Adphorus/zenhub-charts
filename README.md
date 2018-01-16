@@ -141,3 +141,68 @@ In order to use the admin, run:
 ```
 
 go to [http://localhost:8000/admin](http://localhost:8000/admin)
+
+##Docker
+
+You can create docker image.
+
+For web-app:
+```
+docker build  -f Dockerfile -t <web app image name> --rm .
+```
+
+For workers:
+```
+docker build  -f Celery.Dockerfile -t <workers image name> --rm .
+```
+
+Env variables that configures app in docker:
+
+```
+GITHUB_TOKEN=<your token>
+GITHUB_OWNER=<Organization or user name>
+ZENHUB_TOKEN=<your token>
+DB_NAME=<database name for PostgreSql>
+DB_USER=<user name for PostgreSql>
+DB_PASSWORD=<user name for PostgreSql>
+DB_HOST=<PostgreSql host>
+DB_PORT=<PostgreSql port>
+CELERY_BROKER_URL=<url to redis>
+SECRET_KEY=<secret key for web app>
+```
+
+How to run web app:
+
+```
+docker run -it \
+    -e GITHUB_TOKEN=<your token> \
+    -e GITHUB_OWNER=<Organization or user name> \
+    -e ZENHUB_TOKEN=<your token> \
+    -e DB_NAME=<database name for PostgreSql> \
+    -e DB_USER=<user name for PostgreSql> \
+    -e DB_PASSWORD=<user name for PostgreSql> \
+    -e DB_HOST=<PostgreSql host> \
+    -e DB_PORT=<PostgreSql port> \
+    -e CELERY_BROKER_URL=<url to redis> \
+    -e SECRET_KEY=<secret key for web app> \
+    -p 8000:8000 \
+    <web app image name>
+```
+
+How to run workers:
+
+```
+docker run -it \
+    -e GITHUB_TOKEN=<your token> \
+    -e GITHUB_OWNER=<Organization or user name> \
+    -e ZENHUB_TOKEN=<your token> \
+    -e DB_NAME=<database name for PostgreSql> \
+    -e DB_USER=<user name for PostgreSql> \
+    -e DB_PASSWORD=<user name for PostgreSql> \
+    -e DB_HOST=<PostgreSql host> \
+    -e DB_PORT=<PostgreSql port> \
+    -e CELERY_BROKER_URL=<url to redis> \
+    -e SECRET_KEY=<secret key for web app> \
+    -p 8000:8000 \
+    <workers image name>
+```
