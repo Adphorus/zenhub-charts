@@ -247,13 +247,11 @@ class Fetcher(object):
             current_issue_numbers = current_issues.values_list(
                 'number', flat=True)
             total = len(remote_issue_numbers)
-            """
             for counter, issue_number in enumerate(remote_issue_numbers, 1):
                 logger.info(
                     f'Getting issue events for #{issue_number} in {repo} '
                     f'{counter}/{total}')    
                 self.get_issue_events(repo, issue_number)
-            """
             self.close_issues(
                 repo,
                 current_issue_numbers,
