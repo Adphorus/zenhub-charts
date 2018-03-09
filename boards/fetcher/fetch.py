@@ -1,5 +1,7 @@
 import logging
+from django.utils.timezone import now
 from django.conf import settings
+from django.db.models.fields import DateTimeField
 
 from boards.fetcher.clients import GithubClient, ZenhubClient
 from boards.fetcher.exceptions import PipelineNotFoundError
@@ -11,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class Fetcher(object):
-    def __init__(self, repo_names, initial=False, fix=False):
+    def __init__(self, repo_names=None, initial=False, fix=False):
         self.repo_names = repo_names
         self.initial = initial
         self.fix = fix
@@ -73,36 +75,46 @@ class Fetcher(object):
         )
         must_be_closed += extra
         must_be_closed = set(must_be_closed)
-        closed_issues = Issue.objects.filter(
+        closed_pipeline_name = 'Closed'
+        closed_pipeline = self.pipelines[closed_pipeline_name]
+        issues_to_close = Issue.objects.filter(
             repo=repo,
             number__in=must_be_closed
-        ).exclude(latest_pipeline_name='Closed')
-        for closed_issue in closed_issues:
-            github_issue = self.github.get_issue(
-                closed_issue.repo.name, closed_issue.number)
+        ).exclude(latest_pipeline_name=closed_pipeline_name)
+        total = len(issues_to_close)
+        for counter, issue in enumerate(issues_to_close, 1):
+            github_issue = self.github.get_issue(issue.repo.name, issue.number)
             closed_at = github_issue['closed_at']
-            closed_pipeline = self.pipelines['Closed']
+            if not closed_at:
+                logger.info(
+                    f'No closed_at info for #{issue.number} in {repo}'
+                )
+                continue 
             latest_pipeline = Transfer.objects.filter(
-                issue__number=closed_issue.number
+                issue__number=issue.number
             ).latest('transfered_at').to_pipeline
-            kwargs = {
-                'issue': closed_issue,
-                'from_pipeline': latest_pipeline,
-                'to_pipeline': closed_pipeline,
-                'transfered_at': closed_at,
-            }
-            self.create_transfer(**kwargs)
+            if issue.latest_pipeline_name != closed_pipeline_name:
+                issue.latest_pipeline_name = closed_pipeline_name
+                issue.save()
+            if latest_pipeline != closed_pipeline:
+                kwargs = {
+                    'issue': issue,
+                    'from_pipeline': latest_pipeline,
+                    'to_pipeline': closed_pipeline,
+                    'transfered_at': closed_at,
+                }
+                self.create_transfer(**kwargs)
+                logger.info(
+                    f'#{issue.number} in {repo} is closed '
+                    f'{counter}/{total}'
+                )
 
-    def stupid_django_datetime_hack(self, obj, field_name):
+    def stupid_django_datetime_hack(self, value):
         """
         Django does not call `to_python` on model save,
         so any `DateField` or `DateTimeField` returns string instead.
         """
-        return [
-            i
-            for i in obj._meta.fields
-            if i.name == field_name
-        ][0].to_python(obj.transfered_at)
+        return DateTimeField().to_python(value)
 
     def create_transfer(
             self, issue, from_pipeline, to_pipeline, transfered_at):
@@ -122,7 +134,7 @@ class Fetcher(object):
             except Transfer.DoesNotExist:
                 return
             delta = (
-                self.stupid_django_datetime_hack(transfer, 'transfered_at')
+                self.stupid_django_datetime_hack(transfer.transfered_at)
                 - previous_transfer.transfered_at
             )
             total = issue.durations.get(from_pipeline.name, 0)
@@ -173,8 +185,10 @@ class Fetcher(object):
             repo.repo_id, issue_number)
         issue, created = Issue.objects.update_or_create(
             repo=repo, number=issue_number,
-            defaults={'title': github_issue['title']},
-            latest_transfer_date=github_issue['created_at']
+            defaults={
+                'title': github_issue['title'],
+                'latest_transfer_date': github_issue['created_at'],
+            }
         )
         transfers = [
             i for i in zenhub_issue_events if i['type'] == 'transferIssue']
@@ -182,11 +196,17 @@ class Fetcher(object):
             # No transfers yet, but the issue is created
             # and it is in the first pipeline of the board
             # Use `issue.created_at` as the first date
+            created_at = self.stupid_django_datetime_hack(
+                issue.latest_transfer_date)
             Transfer.objects.get_or_create(
                 issue=issue,
                 to_pipeline=self.first_pipeline,
                 transfered_at=github_issue['created_at']
             )
+            issue.latest_pipeline_name = self.first_pipeline.name
+            duration = (now() - created_at).total_seconds()
+            issue.durations[self.first_pipeline.name] = duration
+            issue.save()
         # create the oldest ones first, otherwise
         # we can not calculate durations
         transfers = sorted(transfers, key=lambda x: x['created_at'])
@@ -226,10 +246,14 @@ class Fetcher(object):
             remote_issue_numbers += closed_github_issue_numbers
             current_issue_numbers = current_issues.values_list(
                 'number', flat=True)
-
-            for issue_number in remote_issue_numbers:
+            total = len(remote_issue_numbers)
+            """
+            for counter, issue_number in enumerate(remote_issue_numbers, 1):
+                logger.info(
+                    f'Getting issue events for #{issue_number} in {repo} '
+                    f'{counter}/{total}')    
                 self.get_issue_events(repo, issue_number)
-
+            """
             self.close_issues(
                 repo,
                 current_issue_numbers,

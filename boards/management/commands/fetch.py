@@ -20,6 +20,13 @@ class Command(BaseCommand):
             dest='fix',
             default=False
         )
+        parser.add_argument(
+            '--repo',
+            type=str,
+            dest='repo',
+            required=False
+        )
+
 
     def handle(self, *args, **options):
         self.github = GithubClient(**settings.GITHUB)
@@ -41,6 +48,9 @@ class Command(BaseCommand):
                 print('created ', github_repo['name'])
 
         repos = Repo.objects.all()
+        repo_name = options['repo']        
+        if repo_name:
+            repos = repos.filter(name=repo_name)
         for repo in repos:
             fetcher = Fetcher(
                 [repo.name],

@@ -141,6 +141,7 @@ $.getJSON(url + window.location.search, function (data) {
     },
     plotOptions: {
       scatter: {
+        turboThreshold: 0,
         marker: {
           radius: 5,
           states: {
@@ -159,6 +160,7 @@ $.getJSON(url + window.location.search, function (data) {
         }
       },
       line: {
+        turboThreshold: 0,
         marker: {
           radius: 0,
           states: {
@@ -172,6 +174,7 @@ $.getJSON(url + window.location.search, function (data) {
         }
       },
       series: {
+        turboThreshold: 0,
         cursor: 'pointer',
         point: {
           events: {
