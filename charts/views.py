@@ -16,10 +16,10 @@ class ChartView(generic.TemplateView):
     def get(self, *args, **kwargs):
         repo = self.request.GET.get('repo')
         repos = Repo.objects.values_list('name', flat=True)
-        if not repo:
+        if not repo and repos:
             return redirect(reverse('chart') + '?repo=' + repos[0])
         durations_param = self.request.GET.get('durations')
-        durations = durations.split(',') if durations_param else []
+        durations = durations_param.split(',') if durations_param else []
         context = self.get_context_data(
             repo=repo, repos=repos, durations=durations, **kwargs)
         return self.render_to_response(context)
