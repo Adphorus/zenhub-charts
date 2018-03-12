@@ -19,24 +19,35 @@ class ChartView(generic.TemplateView):
         if not repo and repos:
             return redirect(reverse('chart') + '?repo=' + repos[0])
         durations_param = self.request.GET.get('durations')
-        durations = durations_param.split(',') if durations_param else []
-        context = self.get_context_data(
-            repo=repo, repos=repos, durations=durations, **kwargs)
+        durations = durations_param.split(',') if durations_param else [] 
+        labels_param = self.request.GET.get('labels')
+        labels = labels_param.split(',') if labels_param else []
+        issue_numbers = self.request.GET.get('issue-numbers')
+        context = self.get_context_data(repo, repos, durations, labels,
+                                        issue_numbers, **kwargs)
         return self.render_to_response(context)
 
-    def get_context_data(self, repo, repos, durations, *args, **kwargs):
+    def get_context_data(self, repo, repos, durations, labels, issue_numbers,
+                         *args, **kwargs):
         context = super(ChartView, self).get_context_data(*args, **kwargs)
         pipelines = Pipeline.objects.filter(
             repo__name=repo
         ).values_list('name', flat=True).order_by('order')
         context['pipelines'] = {i: i in durations for i in pipelines}
         context['repos'] = {i: i == repo for i in repos}
+        labels_from_db = Issue.objects.filter(repo__name=repo).values_list(
+            'labels', flat=True)
+        # flatten, dedupe, sort
+        labels_from_db = sorted(list(set(sum(labels_from_db, []))))
+        context['labels'] = {i: i in labels for i in labels_from_db}
+        context['issue_numbers'] = issue_numbers
         return context
 
 
 class ChartResponseView(generic.View):
     def get_chart_data(
-            self, repo_name, since=None, until=None, durations=None):
+            self, repo_name, since=None, until=None, durations=None,
+            labels=None, issue_numbers=None):
         issues = Issue.objects.select_related('repo').filter(
             repo__name=repo_name,
         ).exclude(durations={})
@@ -54,6 +65,10 @@ class ChartResponseView(generic.View):
             )
         if durations:
             issues = issues.filter(durations__has_any_keys=durations)
+        if labels:
+            issues = issues.filter(labels__contains=labels)
+        if issue_numbers:
+            issues = issues.filter(number__in=issue_numbers)
         issues = issues.order_by('latest_transfer_date')
         raw_data = defaultdict(list)
         pipelines = set()
@@ -75,6 +90,7 @@ class ChartResponseView(generic.View):
                 'title': issue.title,
                 'issue_number': issue.number,
                 'url': issue.github_url,
+                'labels': issue.labels,
                 'durations': {
                     k: self._js_time(v)
                     for k, v in pipelines_and_times
@@ -210,5 +226,9 @@ class ChartResponseView(generic.View):
         until = request.GET.get('until')
         durations = request.GET.get('durations')
         durations = durations.split(',') if durations else None
+        labels = request.GET.get('labels')
+        labels = labels.split(',') if labels else None
+        issue_numbers = request.GET.get('issue-numbers')
+        issue_numbers = issue_numbers.split(',') if issue_numbers else None
         return JsonResponse(self.get_chart_data(
-            repo_name, since, until, durations))
+            repo_name, since, until, durations, labels, issue_numbers))
