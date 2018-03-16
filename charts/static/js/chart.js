@@ -52,6 +52,16 @@ $.getJSON(url + window.location.search, function (data) {
     title: {
       text: 'Cycle Time Chart'
     },
+    lang: {
+      noData: "No issues to display, sorry! :("
+    },
+    noData: {
+      style: {
+        fontWeight: 'bold',
+        fontSize: '50px',
+        color: '#303030'
+      }
+    },
     xAxis: {
       type: 'datetime',
       labels: {
@@ -129,7 +139,8 @@ $.getJSON(url + window.location.search, function (data) {
           body += '<b>Rolling Average:</b> ' + asDays(duration)
           body += '<br/><b>Deviation:</b> ' + asDays(low) + ' to ' + asDays(high)
         } else {
-          body += '<b>' + this.point.title + '</b><br/>';
+          body += '<b>(' + this.point.issue_number + ') ' + this.point.title + '</b><br/>';
+          body += '<i>' + this.point.labels  + '</i><br/>'
           for (var pipeline in this.point.durations){
             if (!this.point.durations.hasOwnProperty(pipeline)){continue}
             var duration = moment.duration(this.point.durations[pipeline]);
@@ -202,16 +213,23 @@ $.getJSON(url + window.location.search, function (data) {
           window.location.href = endpoint;
         }
       );
-      $('#pipeline-form').submit(
+      $('#filter-form').submit(
         function(e){
           e.preventDefault();
           var durations = [];
           if ($('#pipelines').val()){
             durations = $('#pipelines').val().join();
           }
+          var labels = [];
+          if ($('#labels').val()){
+            labels = $('#labels').val().join();
+          }
+          var issueNumbers = $('#issue_numbers').val();
           var endpoint = URI(window.location.href); 
           endpoint.setSearch('repo', $('#repos').val());
-          endpoint.setSearch('durations', durations);
+          endpoint.setSearch('durations', durations); 
+          endpoint.setSearch('labels', labels);
+          endpoint.setSearch('issue-numbers', issueNumbers);
           window.location.href = endpoint;
         }
       );
@@ -219,3 +237,4 @@ $.getJSON(url + window.location.search, function (data) {
 });
 $('#pipelines').select2({dropdownCssClass: 'dropdown-inverse'});
 $('#repos').select2({dropdownCssClass: 'dropdown-inverse'});
+$('#labels').select2({dropdownCssClass: 'dropdown-invers'});

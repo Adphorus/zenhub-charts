@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
+from django.contrib.postgres.fields import ArrayField
 
 
 class Repo(models.Model):
@@ -47,6 +48,9 @@ class Issue(models.Model):
     durations = JSONField(default=dict)
     latest_pipeline_name = models.CharField(max_length=255)
     latest_transfer_date = models.DateTimeField()
+    labels = ArrayField(
+        ArrayField(models.CharField(max_length=100)),
+        default=list)
 
     def __str__(self):
         return f'{self.repo}/{self.title}/{self.number}'

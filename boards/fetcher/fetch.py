@@ -183,11 +183,13 @@ class Fetcher(object):
         github_issue = self.github.get_issue(repo.name, issue_number)
         zenhub_issue_events = self.zenhub.get_issue_events(
             repo.repo_id, issue_number)
+        labels = [i['name'] for i in github_issue['labels']]
         issue, created = Issue.objects.update_or_create(
             repo=repo, number=issue_number,
             defaults={
                 'title': github_issue['title'],
                 'latest_transfer_date': github_issue['created_at'],
+                'labels': labels,
             }
         )
         transfers = [

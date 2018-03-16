@@ -1,6 +1,19 @@
 {% extends "base.html" %}
 {% load static %}
 
+{% block header %}
+<style>
+#issue_numbers {
+  border-radius: 5px;
+  border: 2px solid #3498db;
+  line-height: 36px;
+}
+.multi-custom {
+  max-width: 320px;
+}
+</style>
+{% endblock %}
+
 {% block container %}
 <div class="row">
   <div class="col-md-12">
@@ -8,7 +21,7 @@
   </div>
 </div>
 <div class="row">
-  <div class="col-md-4">
+  <div class="col-md-3 repos-wrapper">
     <form id="repos-form">
       <div class="form-group">
         <select id="repos" class="form-control select select-primary select-block mbl">
@@ -21,21 +34,41 @@
       </div>
     </form>
   </div>
-  <div class="col-md-4 col-md-offset-4">
-    <form id="pipeline-form" class="form-inline">
+  <div class="col-md-9">
+    <form id="filter-form" class="form-inline">
       <div class="form-group">
-        <select id="pipelines" multiple="multiple"
-                               class="form-control multiselect multiselect-info">
-          {% for pipeline, selected in pipelines.items %}
-          <option value="{{ pipeline }}" {% if selected %}selected="selected"{% endif %}>
-          {{ pipeline }}
-          </option>
-          {% endfor %}
-        </select>
+          <select id="pipelines" multiple="multiple"
+              class="form-control multiselect multiselect-info multi-custom"
+              placeholder="pipelines">
+            {% for pipeline, selected in pipelines.items %}
+            <option value="{{ pipeline }}" {% if selected %}selected="selected"{% endif %}>
+            {{ pipeline }}
+            </option>
+            {% endfor %}
+          </select>
       </div>
-      <button id="submit" class="btn btn-primary">Search</button>
+      <div class="form-group">
+          <select id="labels" multiple="multiple"
+              class="form-control multiselect multiselect-info multi-custom"
+              placeholder="labels">
+            {% for label, selected in labels.items %}
+            <option value="{{ label }}" {% if selected %}selected="selected"{% endif %}>
+            {{ label }}
+            </option>
+            {% endfor %}
+          </select>
+      </div>
+      <div class="form-group">
+          <input type="text" id="issue_numbers" name="issue_numbers"
+            placeholder="issue numbers (csv)"
+            value="{% if issue_numbers %}{{issue_numbers}}{% endif %}"/>
+      </div>
+      <div class="form-group">
+        <button id="submit" class="btn btn-primary">Search</button>
+      </div>
     </form>
   </div>
+
 </div>
 {% endblock %}
 
