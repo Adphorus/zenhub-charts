@@ -6,13 +6,10 @@
 #issue_numbers {
   border-radius: 5px;
   border: 2px solid #3498db;
-  height: 42px;
+  line-height: 36px;
 }
-#submit {
-  margin-top: 30px;
-}
-.repos-wrapper {
-  margin-top: 35px;
+.multi-custom {
+  max-width: 320px;
 }
 </style>
 {% endblock %}
@@ -40,40 +37,35 @@
   <div class="col-md-9">
     <form id="filter-form" class="form-inline">
       <div class="form-group">
-        <label>
-          Pipelines<br/>
           <select id="pipelines" multiple="multiple"
-              class="form-control multiselect multiselect-info"
-              style="max-width:320px;">
+              class="form-control multiselect multiselect-info multi-custom"
+              placeholder="pipelines">
             {% for pipeline, selected in pipelines.items %}
             <option value="{{ pipeline }}" {% if selected %}selected="selected"{% endif %}>
             {{ pipeline }}
             </option>
             {% endfor %}
           </select>
-        <label>
       </div>
       <div class="form-group">
-        <label>
-          Labels<br/>
           <select id="labels" multiple="multiple"
-              class="form-control multiselect multiselect-info"
-              style="max-width:320px;">
+              class="form-control multiselect multiselect-info multi-custom"
+              placeholder="labels">
             {% for label, selected in labels.items %}
             <option value="{{ label }}" {% if selected %}selected="selected"{% endif %}>
             {{ label }}
             </option>
             {% endfor %}
           </select>
-        <label>
       </div>
       <div class="form-group">
-        <label>
-          Issue Numbers <small>(csv)</small><br/>
-          <input type="text" id="issue_numbers" name="issue_numbers" value="{% if issue_numbers %}{{issue_numbers}}{% endif %}"/>
-        </label>
+          <input type="text" id="issue_numbers" name="issue_numbers"
+            placeholder="issue numbers (csv)"
+            value="{% if issue_numbers %}{{issue_numbers}}{% endif %}"/>
       </div>
-      <button id="submit" class="btn btn-primary">Search</button>
+      <div class="form-group">
+        <button id="submit" class="btn btn-primary">Search</button>
+      </div>
     </form>
   </div>
 
