@@ -92,9 +92,11 @@ class Fetcher(object):
                     f'No closed_at info for #{issue.number} in {repo}'
                 )
                 continue 
-            latest_pipeline = Transfer.objects.filter(
+            latest_transfer = Transfer.objects.filter(
                 issue__number=issue.number
-            ).latest('transfered_at').to_pipeline
+            ).latest('transfered_at')
+            latest_pipeline = latest_transfer.to_pipeline
+            latest_transfer_date = latest_transfer.transfered_at
             if issue.latest_pipeline_name != self.closed_pipeline_name:
                 issue.latest_pipeline_name = self.closed_pipeline_name
                 issue.save()
@@ -111,7 +113,8 @@ class Fetcher(object):
                     f'{counter}/{total}'
                 )
             issue.durations = self.calculate_durations(issue)
-            issue.save(update_fields=['durations'])
+            issu.latest_transfer_date = latest_transfer_date
+            issue.save(update_fields=['durations', 'latest_transfer_date'])
 
     def stupid_django_datetime_hack(self, value):
         """
@@ -201,6 +204,10 @@ class Fetcher(object):
         # create the oldest ones first, otherwise
         # we can not calculate durations
         transfers = sorted(transfers, key=lambda x: x['created_at'])
+        if transfers:
+            latest_transfer_date = transfers[-1]['created_at']
+        else:
+            latest_transfer_date = github_issue['created_at']
         for transfer in transfers:
             kwargs = {
                 'issue': issue,
@@ -214,7 +221,8 @@ class Fetcher(object):
             self.create_transfer(**kwargs)
         durations = self.calculate_durations(issue)
         issue.durations = durations
-        issue.save(update_fields=['durations'])
+        issue.latest_transfer_date = latest_transfer_date
+        issue.save(update_fields=['durations', 'latest_transfer_date'])
 
     def calculate_durations(self, issue):
         transfers = issue.transfers.select_related(
