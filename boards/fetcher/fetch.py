@@ -113,7 +113,7 @@ class Fetcher(object):
                     f'{counter}/{total}'
                 )
             issue.durations = self.calculate_durations(issue)
-            issu.latest_transfer_date = latest_transfer_date
+            issue.latest_transfer_date = latest_transfer_date
             issue.save(update_fields=['durations', 'latest_transfer_date'])
 
     def stupid_django_datetime_hack(self, value):
