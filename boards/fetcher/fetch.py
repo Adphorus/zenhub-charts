@@ -24,7 +24,7 @@ class Fetcher(object):
         self.pipelines = {}
 
     def create_pipelines(self, repo, pipelines):
-        Pipeline.objects.get_or_create(
+        self.closed_pipeline, created = Pipeline.objects.get_or_create(
             pipeline_id=f"{repo}-closed",
             name=self.closed_pipeline_name, repo=repo,
             defaults={
@@ -64,79 +64,6 @@ class Fetcher(object):
             for p in Pipeline.objects.filter(repo=repo)
         }
 
-    def get_issue_numbers(self, pipelines):
-        return [
-            item['issue_number']
-            for sublist in [i['issues'] for i in pipelines]
-            for item in sublist
-        ]
-
-    def close_issues(
-            self, repo, current_issue_numbers, remote_issue_numbers, extra=[]):
-        must_be_closed = list(
-            set(current_issue_numbers) - set(remote_issue_numbers)
-        )
-        must_be_closed += extra
-        must_be_closed = set(must_be_closed)
-        closed_pipeline = self.pipelines[self.closed_pipeline_name]
-        issues_to_close = Issue.objects.filter(
-            repo=repo,
-            number__in=must_be_closed
-        ).exclude(latest_pipeline_name=self.closed_pipeline_name)
-        total = len(issues_to_close)
-        for counter, issue in enumerate(issues_to_close, 1):
-            github_issue = self.github.get_issue(issue.repo.name, issue.number)
-            closed_at = github_issue['closed_at']
-            if not closed_at:
-                logger.info(
-                    f'No closed_at info for #{issue.number} in {repo}'
-                )
-                continue 
-            latest_transfer = Transfer.objects.filter(
-                issue__number=issue.number
-            ).latest('transfered_at')
-            latest_pipeline = latest_transfer.to_pipeline
-            latest_transfer_date = latest_transfer.transfered_at
-            if issue.latest_pipeline_name != self.closed_pipeline_name:
-                issue.latest_pipeline_name = self.closed_pipeline_name
-                issue.save()
-            if latest_pipeline != closed_pipeline:
-                kwargs = {
-                    'issue': issue,
-                    'from_pipeline': latest_pipeline,
-                    'to_pipeline': closed_pipeline,
-                    'transfered_at': closed_at,
-                }
-                self.create_transfer(**kwargs)
-                logger.info(
-                    f'#{issue.number} in {repo} is closed '
-                    f'{counter}/{total}'
-                )
-            issue.durations = self.calculate_durations(issue)
-            issue.latest_transfer_date = latest_transfer_date
-            issue.save(update_fields=['durations', 'latest_transfer_date'])
-
-    def stupid_django_datetime_hack(self, value):
-        """
-        Django does not call `to_python` on model save,
-        so any `DateField` or `DateTimeField` returns string instead.
-        """
-        return DateTimeField().to_python(value)
-
-    def create_transfer(
-            self, issue, from_pipeline, to_pipeline, transfered_at):
-        transfer, created = Transfer.objects.get_or_create(
-            issue=issue,
-            from_pipeline=from_pipeline,
-            to_pipeline=to_pipeline,
-            transfered_at=transfered_at
-        )
-        if created:
-            logger.info(f'created transfer: {transfer}')
-            issue.latest_pipeline_name = transfer.to_pipeline.name
-            issue.latest_transfer_date = transfered_at
-            issue.save()
-
     def get_pipeline(self, repo, name):
         def select_one(pipeline_names):
             try:
@@ -169,12 +96,15 @@ class Fetcher(object):
                 self.pipeline_name_mapping[name] = new_name
                 return self.pipelines[new_name]
             else:
-                raise PipelineNotFoundError(repo, name)
+                raise PipelineNotFoundError(repo, name) 
 
     def get_issue_events(self, repo, issue_number):
         github_issue = self.github.get_issue(repo.name, issue_number)
         zenhub_issue_events = self.zenhub.get_issue_events(
             repo.repo_id, issue_number)
+        zenhub_issue = self.zenhub.get_issue(repo.repo_id, issue_number)
+        latest_pipeline_name = zenhub_issue['pipeline']['name']
+        closed = latest_pipeline_name == self.closed_pipeline_name
         labels = [i['name'] for i in github_issue['labels']]
         issue, created = Issue.objects.update_or_create(
             repo=repo, number=issue_number,
@@ -185,44 +115,56 @@ class Fetcher(object):
             }
         )
         transfers = [
-            i for i in zenhub_issue_events if i['type'] == 'transferIssue']
-        if created:
-            # No transfers yet, but the issue is created
-            # and it is in the first pipeline of the board
-            # Use `issue.created_at` as the first date
-            created_at = self.stupid_django_datetime_hack(
-                issue.latest_transfer_date)
-            Transfer.objects.get_or_create(
-                issue=issue,
-                to_pipeline=self.first_pipeline,
-                transfered_at=github_issue['created_at']
-            )
-            issue.latest_pipeline_name = self.first_pipeline.name
-            duration = (now() - created_at).total_seconds()
-            issue.durations[self.first_pipeline.name] = duration
-            issue.save()
-        # create the oldest ones first, otherwise
-        # we can not calculate durations
-        transfers = sorted(transfers, key=lambda x: x['created_at'])
-        if transfers:
-            latest_transfer_date = transfers[-1]['created_at']
-        else:
-            latest_transfer_date = github_issue['created_at']
-        for transfer in transfers:
-            kwargs = {
+            self._prepare_transfer(issue, e) for e in zenhub_issue_events
+            if e['type'] == 'transferIssue'
+        ]
+        transfers = sorted(transfers, key=lambda x: x['transfered_at']) 
+        transfers.insert(0, {
+            'issue': issue, 
+            'transfered_at': github_issue['created_at'],
+            'from_pipeline': None,
+            'to_pipeline': self.first_pipeline,
+        })
+        if closed:
+            # Issue is closed, we can not get this info from Zenhub
+            transfers.append({
                 'issue': issue,
-                'from_pipeline': (
-                    self.get_pipeline(repo, transfer['from_pipeline']['name'])
-                ),
-                'to_pipeline': self.get_pipeline(
-                    repo, transfer['to_pipeline']['name']),
-                'transfered_at': transfer['created_at']
-            }
-            self.create_transfer(**kwargs)
+                'transfered_at': github_issue['closed_at'],
+                'from_pipeline': transfers[-1]['to_pipeline'],
+                'to_pipeline': self.closed_pipeline,
+            })
+        for transfer in transfers:
+            self.create_transfer(**transfer)
         durations = self.calculate_durations(issue)
         issue.durations = durations
-        issue.latest_transfer_date = latest_transfer_date
-        issue.save(update_fields=['durations', 'latest_transfer_date'])
+        issue.latest_transfer_date = transfers[-1]['transfered_at']
+        issue.latest_pipeline_name = latest_pipeline_name
+        issue.save()
+
+    def _prepare_transfer(self, issue, transfer):
+        _transfer = {'issue': issue, 'transfered_at': transfer['created_at']}
+        from_pipeline_name = transfer.get('from_pipeline', {}).get('name')
+        if from_pipeline_name:
+            _transfer['from_pipeline'] = self.get_pipeline(
+                issue.repo, from_pipeline_name)
+        to_pipeline_name = transfer.get('to_pipeline', {}).get('name')
+        if to_pipeline_name:
+            _transfer['to_pipeline'] = self.get_pipeline(
+                issue.repo, to_pipeline_name)
+        return _transfer
+
+    def create_transfer(
+            self, issue, from_pipeline, to_pipeline, transfered_at):
+        if from_pipeline == to_pipeline:
+            return
+        transfer, created = Transfer.objects.get_or_create(
+            issue=issue,
+            from_pipeline=from_pipeline,
+            to_pipeline=to_pipeline,
+            transfered_at=transfered_at
+        )
+        if created:
+            logger.info(f'created transfer: {transfer}')
 
     def calculate_durations(self, issue):
         transfers = issue.transfers.select_related(
@@ -230,8 +172,15 @@ class Fetcher(object):
         durations = {}
         last_index = transfers.count() - 1
         for order, transfer in enumerate(transfers):
+            if order == last_index:
+                if transfer.to_pipeline.name != self.closed_pipeline_name:
+                    delta = now() - transfer.transfered_at
+                    total_seconds = delta.total_seconds()
+                    if not transfer.to_pipeline.name in durations:
+                        durations[transfer.to_pipeline.name] = 0
+                    durations[transfer.to_pipeline.name] += total_seconds
             previous = None
-            if order>0:
+            if order > 0:
                 previous = transfers[order-1]
             if not previous or not previous.to_pipeline:
                 continue
@@ -239,19 +188,11 @@ class Fetcher(object):
             if not previous.to_pipeline.name in durations:
                 durations[previous.to_pipeline.name] = 0
             durations[previous.to_pipeline.name] += delta.total_seconds()
-            if order == last_index:
-                if transfer.to_pipeline.name != self.closed_pipeline_name:
-                    delta = now() - transfer.transfered_at
-                    total_seconds = delta.total_seconds()
-                else:
-                    total_seconds = 0
-                if not transfer.to_pipeline.name in durations:
-                    durations[transfer.to_pipeline.name] = 0
-                durations[transfer.to_pipeline.name] += total_seconds
+        
         logger.info(f'calculated durations')
         return durations
 
-    def get_closed_issue_numbers_from_github(self, repo):
+    def get_closed_issue_numbers(self, repo):
         closed_github_issue_numbers = []
         if self.fix:
             pages = self.github.get_issues(
@@ -261,6 +202,13 @@ class Fetcher(object):
                     closed_github_issue_numbers.append(issue['number'])
         return closed_github_issue_numbers
 
+    def get_issue_numbers(self, pipelines):
+        return [
+            item['issue_number']
+            for sublist in [i['issues'] for i in pipelines]
+            for item in sublist
+        ]
+
     def sync(self):
         repos = Repo.objects.all()
         if self.repo_names:
@@ -269,21 +217,13 @@ class Fetcher(object):
             current_issues = repo.issues.all()
             board = self.zenhub.get_board(repo.repo_id)
             self.create_pipelines(repo, board['pipelines'])
-            closed_github_issue_numbers = \
-                self.get_closed_issue_numbers_from_github(repo)
-            remote_issue_numbers = self.get_issue_numbers(board['pipelines'])
-            remote_issue_numbers += closed_github_issue_numbers
-            current_issue_numbers = current_issues.values_list(
-                'number', flat=True)
-            total = len(remote_issue_numbers)
-            for counter, issue_number in enumerate(remote_issue_numbers, 1):
+            closed_github_issue_numbers = self.get_closed_issue_numbers(repo)
+            issue_numbers = self.get_issue_numbers(board['pipelines'])
+            issue_numbers += closed_github_issue_numbers
+            issue_numbers = sorted(list(set(issue_numbers)), reverse=True)
+            total = len(issue_numbers)
+            for counter, issue_number in enumerate(issue_numbers, 1):
                 logger.info(
                     f'Getting issue events for #{issue_number} in {repo} '
                     f'{counter}/{total}')    
                 self.get_issue_events(repo, issue_number)
-            self.close_issues(
-                repo,
-                current_issue_numbers,
-                remote_issue_numbers,
-                extra=closed_github_issue_numbers
-            )

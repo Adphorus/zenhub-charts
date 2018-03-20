@@ -62,6 +62,9 @@ $.getJSON(url + window.location.search, function (data) {
         color: '#303030'
       }
     },
+    layout: {
+      padding: 10
+    },
     xAxis: {
       type: 'datetime',
       labels: {
@@ -139,8 +142,10 @@ $.getJSON(url + window.location.search, function (data) {
           body += '<b>Rolling Average:</b> ' + asDays(duration)
           body += '<br/><b>Deviation:</b> ' + asDays(low) + ' to ' + asDays(high)
         } else {
-          body += '<b>(' + this.point.issue_number + ') ' + this.point.title + '</b><br/>';
-          body += '<i>' + this.point.labels  + '</i><br/>'
+          var issueTransferDate = moment(this.point.x).format('YYYY-MM-DD HH:mm:SS');
+          body += '<b>(' + this.point.issue_number + ') ' + this.point.title + '</b><br/>'; 
+          body += '<b>' + issueTransferDate + '</i><br/>';
+          body += '<i>' + this.point.labels  + '</i><br/>';
           for (var pipeline in this.point.durations){
             if (!this.point.durations.hasOwnProperty(pipeline)){continue}
             var duration = moment.duration(this.point.durations[pipeline]);
