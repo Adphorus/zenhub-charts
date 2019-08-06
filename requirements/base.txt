@@ -1,5 +1,5 @@
 backoff==1.4.3
-Django==1.11.4
+Django==1.11.23
 gunicorn==19.7.1
 psycopg2==2.7.3
 python-dateutil==2.6.1
