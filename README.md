@@ -142,7 +142,7 @@ In order to use the admin, run:
 
 go to [http://localhost:8000/admin](http://localhost:8000/admin)
 
-##Docker
+## Docker
 
 You can create docker image.
 
